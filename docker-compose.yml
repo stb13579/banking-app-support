@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: banking
+      POSTGRES_PASSWORD: banking
+      POSTGRES_DB: banking
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banking"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  support:
+    build: .
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql://banking:banking@postgres:5432/banking
+      JWT_SECRET: supersecret123
+      PORT: "8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads:
